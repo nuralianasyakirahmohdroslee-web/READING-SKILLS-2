@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Permainan Sebutan English - At The Beach</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        beachSky: '#38bdf8',
+                        beachSand: '#fef08a',
+                        beachGrass: '#4ade80',
+                        roadGray: '#475569',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Custom CSS Animations -->
+    <style>
+        @keyframes drive {
+            0% { left: -10%; }
+            100% { left: 42%; }
+        }
+        @keyframes passObstacle {
+            0% { left: 42%; }
+            100% { left: 110%; }
+        }
+        @keyframes crashShake {
+            0%, 100% { transform: translateX(0) rotate(0deg); }
+            20% { transform: translateX(-12px) rotate(-6deg); }
+            40% { transform: translateX(12px) rotate(6deg); }
+            60% { transform: translateX(-8px) rotate(-3deg); }
+            80% { transform: translateX(8px) rotate(3deg); }
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 15px rgba(239, 68, 68, 0.6); transform: scale(1); }
+            50% { box-shadow: 0 0 30px rgba(239, 68, 68, 0.9); transform: scale(1.08); }
+        }
+        @keyframes wheelSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @keyframes bounceSlow {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .car-approaching {
+            animation: drive 1.8s ease-out forwards;
+        }
+        .car-passing {
+            animation: passObstacle 1.5s ease-in forwards;
+        }
+        .car-crashing {
+            animation: crashShake 0.6s ease-in-out;
+        }
+        .wheel-spinning {
+            animation: wheelSpin 0.5s linear infinite;
+        }
+        .mic-active {
+            animation: pulseGlow 1.2s infinite ease-in-out;
+            background-color: #ef4444 !important;
+        }
+        .floating-icon {
+            animation: bounceSlow 2s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-sky-100 min-h-screen text-slate-800 font-sans flex flex-col justify-between overflow-x-hidden select-none">
+
+    <!-- Top Header -->
+    <header class="bg-sky-600 text-white p-3 shadow-md">
+        <div class="max-w-4xl mx-auto flex justify-between items-center px-2">
+            <div class="flex items-center space-x-2">
+                <span class="text-2xl">🚗</span>
+                <h1 class="text-lg md:text-xl font-bold tracking-wide">Pronunciation Adventure</h1>
+            </div>
+            <div id="userInfoHeader" class="hidden text-xs md:text-sm bg-sky-700 py-1 px-3 rounded-full font-medium">
+                <span id="headerName">-</span> (<span id="headerClass">-</span>)
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-4xl w-full mx-auto p-3 md:p-6 flex-grow flex flex-col justify-center">
+
+        <!-- SCREEN 1: PLAYER INFO REGISTRATION -->
+        <section id="startScreen" class="bg-white rounded-3xl p-6 md:p-8 shadow-xl text-center border-4 border-sky-300 transition-all max-w-md mx-auto w-full">
+            <div class="text-5xl mb-3 floating-icon">🏖️</div>
+            <h2 class="text-2xl font-extrabold text-sky-700 mb-1">At The Beach</h2>
+            <p class="text-slate-500 text-sm mb-6">Sebut ayat dengan betul untuk melepasi halangan!</p>
+
+            <form id="playerForm" class="space-y-4 text-left">
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">Nama Murid:</label>
+                    <input type="text" id="playerName" required placeholder="Contoh: Ali bin Ahmad"
+                           class="w-full px-4 py-3 rounded-xl border-2 border-slate-300 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 outline-none transition text-base">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">Kelas:</label>
+                    <input type="text" id="playerClass" required placeholder="Contoh: 3 Cemerlang"
+                           class="w-full px-4 py-3 rounded-xl border-2 border-slate-300 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 outline-none transition text-base">
+                </div>
+                
+                <button type="submit" 
+                        class="w-full mt-4 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-extrabold text-lg py-3.5 px-6 rounded-2xl shadow-lg transition duration-200 flex items-center justify-center space-x-2">
+                    <span>Mula Permainan</span>
+                    <span class="text-xl">🚀</span>
+                </button>
+            </form>
+            
+            <p id="browserWarning" class="hidden mt-4 text-xs text-red-500 font-semibold bg-red-50 p-2 rounded-lg border border-red-200">
+                ⚠️ Pelayar ini tidak menyokong pengecaman suara. Sila gunakan Google Chrome pada Android/PC atau Safari pada iPhone.
+            </p>
+        </section>
+
+        <!-- SCREEN 2: GAMEPLAY SCREEN -->
+        <section id="gameScreen" class="hidden flex flex-col space-y-4">
+            
+            <!-- Stats Dashboard Bar -->
+            <div class="bg-white rounded-2xl p-3 shadow-md flex justify-between items-center border-2 border-sky-200">
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs md:text-sm font-bold text-slate-500 uppercase">Tahap:</span>
+                    <span id="levelIndicator" class="bg-sky-500 text-white font-extrabold text-xs md:text-sm px-3 py-1 rounded-full shadow">
+                        Level 1 / 10
+                    </span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs md:text-sm font-bold text-slate-500 uppercase">Markah:</span>
+                    <span id="scoreDisplay" class="bg-amber-400 text-slate-900 font-extrabold text-sm md:text-base px-4 py-1 rounded-full shadow">
+                        0
+                    </span>
+                </div>
+            </div>
+
+            <!-- Cartoon Scene / Driving Viewport -->
+            <div class="relative w-full h-48 md:h-56 bg-gradient-to-b from-sky-300 via-sky-200 to-amber-100 rounded-3xl overflow-hidden border-4 border-sky-400 shadow-inner">
+                
+                <!-- Background Environment (Clouds, Sun, Sea) -->
+                <div class="absolute top-2 right-4 text-3xl">☀️</div>
+                <div class="absolute top-4 left-8 text-2xl opacity-80 floating-icon">☁️</div>
+                <div class="absolute top-6 left-1/2 text-xl opacity-70 floating-icon" style="animation-delay: 1s;">☁️</div>
+                
+                <!-- Sea Line & Palm Trees -->
+                <div class="absolute bottom-16 left-0 right-0 h-10 bg-sky-400 border-t-2 border-white/50 flex justify-around items-end px-4">
+                    <span class="text-lg">🌴</span>
+                    <span class="text-lg">🏖️</span>
+                    <span class="text-lg">🌴</span>
+                </div>
+
+                <!-- Beach Sand Strip -->
+                <div class="absolute bottom-12 left-0 right-0 h-4 bg-amber-200"></div>
+
+                <!-- Road -->
+                <div class="absolute bottom-0 left-0 right-0 h-12 bg-slate-700 flex items-center">
+                    <!-- Road dashed line -->
+                    <div class="w-full border-t-2 border-dashed border-yellow-300 opacity-80"></div>
+                </div>
+
+                <!-- Animated Car (Moving Left to Right) -->
+                <div id="carContainer" class="absolute bottom-3 left-0 transition-all duration-300 z-10">
+                    <!-- SVG Cute Red Toy Car Facing RIGHT -->
+                    <svg class="w-16 h-12 md:w-20 md:h-14 drop-shadow-md" viewBox="0 0 100 60">
+                        <!-- Car Body -->
+                        <path d="M 10 35 Q 15 20 30 20 L 60 20 Q 75 20 85 30 L 95 35 Q 98 40 95 45 L 5 45 Q 2 40 10 35 Z" fill="#ef4444" />
+                        <!-- Roof / Cabin -->
+                        <path d="M 25 22 L 40 8 L 65 8 L 78 22 Z" fill="#dc2626" />
+                        <!-- Windows -->
+                        <path d="M 30 20 L 42 11 L 52 11 L 52 20 Z" fill="#93c5fd" />
+                        <path d="M 55 20 L 55 11 L 63 11 L 72 20 Z" fill="#93c5fd" />
+                        <!-- Headlight (Front Facing Right) -->
+                        <circle cx="92" cy="38" r="3" fill="#fef08a" />
+                        <polygon points="95,36 100,32 100,44 95,40" fill="#fef08a" opacity="0.6"/>
+                        <!-- Wheels -->
+                        <g id="wheelLeft" class="wheel-spinning">
+                            <circle cx="28" cy="45" r="9" fill="#1e293b" />
+                            <circle cx="28" cy="45" r="4" fill="#94a3b8" />
+                        </g>
+                        <g id="wheelRight" class="wheel-spinning">
+                            <circle cx="72" cy="45" r="9" fill="#1e293b" />
+                            <circle cx="72" cy="45" r="4" fill="#94a3b8" />
+                        </g>
+                    </svg>
+                </div>
+
+                <!-- Obstacle (Positioned at center right ~55%) -->
+                <div id="obstacle" class="absolute bottom-3 left-[55%] z-10 transition-all duration-300">
+                    <!-- SVG Traffic Cone / Barrier Obstacle -->
+                    <svg class="w-10 h-10 md:w-12 md:h-12 drop-shadow-md" viewBox="0 0 40 40">
+                        <polygon points="20,5 30,35 10,35" fill="#f97316" />
+                        <polygon points="18,12 22,12 24,18 16,18" fill="#ffffff" />
+                        <polygon points="15,22 25,22 27,28 13,28" fill="#ffffff" />
+                        <rect x="5" y="34" width="30" height="4" rx="2" fill="#334155" />
+                    </svg>
+                </div>
+
+                <!-- Impact / Crash VFX Emoji -->
+                <div id="crashEffect" class="hidden absolute bottom-6 left-[50%] z-20 text-3xl animate-ping">
+                    💥
+                </div>
+            </div>
+
+            <!-- Sentence Display Card -->
+            <div class="bg-white rounded-3xl p-5 md:p-6 shadow-xl border-2 border-sky-100 text-center space-y-3">
+                <div class="flex justify-center items-center space-x-2">
+                    <span id="sentenceIcon" class="text-3xl md:text-4xl floating-icon">🐚</span>
+                </div>
+                <p class="text-xs uppercase font-extrabold tracking-wider text-sky-500">Sebut ayat di bawah:</p>
+                <div class="bg-sky-50 p-4 rounded-2xl border-2 border-sky-200">
+                    <h3 id="targetSentence" class="text-lg md:text-2xl font-black text-slate-800 tracking-wide leading-relaxed">
+                        "My brother collects shells at the beach."
+                    </h3>
+                </div>
+
+                <!-- Feedback & Status Message -->
+                <div id="statusBox" class="min-h-[48px] flex items-center justify-center px-4 py-2 rounded-xl bg-slate-50 text-slate-600 text-sm md:text-base font-semibold border border-slate-200">
+                    Tekan butang mikrofon dan baca ayat di atas.
+                </div>
+
+                <!-- Microphones & Action Controls -->
+                <div class="pt-2 flex flex-col items-center justify-center space-y-3">
+                    
+                    <!-- Push-To-Talk Microphone Button -->
+                    <button id="micBtn" 
+                            class="w-20 h-20 md:w-24 md:h-24 bg-rose-500 hover:bg-rose-600 text-white rounded-full shadow-2xl flex flex-col items-center justify-center active:scale-95 transition duration-200 border-4 border-white ring-4 ring-rose-200">
+                        <svg class="w-8 h-8 md:w-10 md:h-10" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a1 1 0 0 0-2 0 3 3 0 0 1-6 0 1 1 0 0 0-2 0 5 5 0 0 0 4 4.9V19H8a1 1 0 0 0 0 2h8a1 1 0 0 0 0-2h-3v-2.1a5 5 0 0 0 4-4.9z"/>
+                        </svg>
+                        <span class="text-[10px] md:text-xs font-bold mt-1">TEKAN & SEBUT</span>
+                    </button>
+
+                    <!-- Next Level Button (Hidden initially) -->
+                    <button id="nextLevelBtn" 
+                            class="hidden w-full max-w-xs bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-lg py-3.5 px-6 rounded-2xl shadow-lg active:scale-95 transition duration-200 flex items-center justify-center space-x-2 animate-bounce">
+                        <span>Tahap Seterusnya</span>
+                        <span class="text-xl">➡️</span>
+                    </button>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- SCREEN 3: GAME OVER & LEADERBOARD -->
+        <section id="endScreen" class="hidden bg-white rounded-3xl p-6 md:p-8 shadow-2xl border-4 border-amber-300 text-center space-y-6 max-w-lg mx-auto w-full">
+            <div>
+                <div class="text-6xl mb-2">🏆</div>
+                <h2 class="text-2xl md:text-3xl font-black text-amber-600">Tahniah! Permainan Tamat</h2>
+                <p class="text-slate-500 text-sm">Anda telah melepasi semua halangan sebutan!</p>
+            </div>
+
+            <!-- Player Summary -->
+            <div class="bg-amber-50 p-4 rounded-2xl border-2 border-amber-200 flex justify-around items-center">
+                <div>
+                    <p class="text-xs font-bold text-slate-500">Pemain</p>
+                    <p id="finalPlayerName" class="text-base font-extrabold text-slate-800">-</p>
+                    <p id="finalPlayerClass" class="text-xs text-slate-600">-</p>
+                </div>
+                <div class="h-8 w-px bg-amber-200"></div>
+                <div>
+                    <p class="text-xs font-bold text-slate-500">Jumlah Markah</p>
+                    <p id="finalScore" class="text-2xl font-black text-emerald-600">0</p>
+                </div>
+            </div>
+
+            <!-- Leaderboard Table -->
+            <div class="space-y-2 text-left">
+                <h3 class="text-sm font-extrabold text-slate-700 uppercase tracking-wide flex items-center space-x-1">
+                    <span>📊</span>
+                    <span>Carta Kedudukan (Leaderboard)</span>
+                </h3>
+                
+                <div class="bg-slate-50 rounded-2xl p-3 border border-slate-200 max-h-56 overflow-y-auto">
+                    <table class="w-full text-left text-xs md:text-sm">
+                        <thead>
+                            <tr class="border-b border-slate-200 text-slate-500 font-bold">
+                                <th class="pb-2">#</th>
+                                <th class="pb-2">Nama</th>
+                                <th class="pb-2">Kelas</th>
+                                <th class="pb-2 text-right">Markah</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboardBody" class="divide-y divide-slate-200">
+                            <!-- Leaderboard rows injected dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Restart Game Button -->
+            <button id="restartBtn" 
+                    class="w-full bg-sky-500 hover:bg-sky-600 active:scale-95 text-white font-extrabold text-lg py-3.5 px-6 rounded-2xl shadow-lg transition duration-200">
+                Main Semula 🔄
+            </button>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center py-3 text-xs text-slate-400 font-medium">
+        Permainan Sebutan Sekolah Rendah • Mod Moden Bahasa Inggeris
+    </footer>
+
+    <script>
+        /* ==========================================================================
+           1. DATA SET & STATE MANAGEMENT
+           ========================================================================== */
+        const SENTENCES = [
+            { text: "My brother collects shells at the beach.", icon: "🐚" },
+            { text: "I wake up early and brush my teeth.", icon: "⏰" },
+            { text: "I read a book before bed.", icon: "📚" },
+            { text: "I hava a blue bag.", icon: "🎒" },
+            { text: "We learn English and sing songs together.", icon: "🎵" },
+            { text: "Her name is Julia.", icon: "👧" },
+            { text: "I go to school with my best friend.", icon: "🏫" },
+            { text: "I love to eat apple.", icon: "🍎" },
+            { text: "Ariel is wearing a black skirt and pink blouse.", icon: "👗" },
+            { text: "English is fun.", icon: "⭐" }
+        ];
+
+        let currentLevel = 0; // 0-indexed internally
+        let score = 0;
+        let playerName = "";
+        let playerClass = "";
+        let isListening = false;
+        let recognition = null;
+
+        /* ==========================================================================
+           2. DOM ELEMENTS
+           ========================================================================== */
+        const startScreen = document.getElementById("startScreen");
+        const gameScreen = document.getElementById("gameScreen");
+        const endScreen = document.getElementById("endScreen");
+        const playerForm = document.getElementById("playerForm");
+        const playerNameInput = document.getElementById("playerName");
+        const playerClassInput = document.getElementById("playerClass");
+        const browserWarning = document.getElementById("browserWarning");
+        
+        const userInfoHeader = document.getElementById("userInfoHeader");
+        const headerName = document.getElementById("headerName");
+        const headerClass = document.getElementById("headerClass");
+        const levelIndicator = document.getElementById("levelIndicator");
+        const scoreDisplay = document.getElementById("scoreDisplay");
+        
+        const carContainer = document.getElementById("carContainer");
+        const obstacle = document.getElementById("obstacle");
+        const crashEffect = document.getElementById("crashEffect");
+        const targetSentenceEl = document.getElementById("targetSentence");
+        const sentenceIconEl = document.getElementById("sentenceIcon");
+        const statusBox = document.getElementById("statusBox");
+        const micBtn = document.getElementById("micBtn");
+        const nextLevelBtn = document.getElementById("nextLevelBtn");
+
+        const finalPlayerName = document.getElementById("finalPlayerName");
+        const finalPlayerClass = document.getElementById("finalPlayerClass");
+        const finalScore = document.getElementById("finalScore");
+        const leaderboardBody = document.getElementById("leaderboardBody");
+        const restartBtn = document.getElementById("restartBtn");
+
+        /* ==========================================================================
+           3. WEB AUDIO SFX SYNTHESIZER (No External Assets)
+           ========================================================================== */
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioCtx();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // Play Success Chime Sound
+        function playSuccessSound() {
+            try {
+                initAudio();
+                const now = audioCtx.currentTime;
+                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                notes.forEach((freq, idx) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+                    gain.gain.setValueAtTime(0.2, now + idx * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.3);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now + idx * 0.08);
+                    osc.stop(now + idx * 0.08 + 0.3);
+                });
+            } catch (e) {
+                console.error("Audio SFX Error:", e);
+            }
+        }
+
+        // Play Crash Sound
+        function playCrashSound() {
+            try {
+                initAudio();
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.exponentialRampToValueAtTime(40, now + 0.3);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } catch (e) {
+                console.error("Audio SFX Error:", e);
+            }
+        }
+
+        /* ==========================================================================
+           4. SPEECH RECOGNITION SETUP
+           ========================================================================== */
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        if (!SpeechRecognition) {
+            browserWarning.classList.remove("hidden");
+        } else {
+            recognition = new SpeechRecognition();
+            // Primary language for English learning sentences
+            recognition.lang = "en-US";
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            recognition.onstart = function() {
+                isListening = true;
+                micBtn.classList.add("mic-active");
+                updateStatus("🎙️ Sedang mendengar... Sila sebut ayat di atas sekarang!", "bg-rose-50 text-rose-700 border-rose-300");
+            };
+
+            recognition.onresult = function(event) {
+                isListening = false;
+                micBtn.classList.remove("mic-active");
+                const transcript = event.results[0][0].transcript;
+                console.log("Speech Result:", transcript);
+                evaluateSpeech(transcript);
+            };
+
+            recognition.onerror = function(event) {
+                isListening = false;
+                micBtn.classList.remove("mic-active");
+                console.error("Speech Recognition Error:", event.error);
+                if (event.error === "no-speech") {
+                    updateStatus("Tiada suara dikesan. Sila cuba lagi.", "bg-amber-50 text-amber-700 border-amber-300");
+                } else if (event.error === "not-allowed") {
+                    updateStatus("Sila benarkan akses mikrofon untuk bermain permainan ini.", "bg-red-50 text-red-700 border-red-300");
+                } else {
+                    updateStatus("Ralat pengecaman suara: " + event.error + ". Sila cuba lagi.", "bg-amber-50 text-amber-700 border-amber-300");
+                }
+            };
+
+            recognition.onend = function() {
+                isListening = false;
+                micBtn.classList.remove("mic-active");
+            };
+        }
+
+        /* Levenshtein Similarity Calculation (Tolerance: 75% - 90%) */
+        function calculateSimilarity(str1, str2) {
+            const clean1 = str1.toLowerCase().replace(/[^\w\s]/gi, '').trim();
+            const clean2 = str2.toLowerCase().replace(/[^\w\s]/gi, '').trim();
+
+            if (clean1 === clean2) return 1.0;
+            if (!clean1 || !clean2) return 0.0;
+
+            const matrix = Array(clean2.length + 1).fill(null).map(() => Array(clean1.length + 1).fill(null));
+
+            for (let i = 0; i <= clean1.length; i++) matrix[0][i] = i;
+            for (let j = 0; j <= clean2.length; j++) matrix[j][0] = j;
+
+            for (let j = 1; j <= clean2.length; j++) {
+                for (let i = 1; i <= clean1.length; i++) {
+                    const indicator = clean1[i - 1] === clean2[j - 1] ? 0 : 1;
+                    matrix[j][i] = Math.min(
+                        matrix[j][i - 1] + 1,
+                        matrix[j - 1][i] + 1,
+                        matrix[j - 1][i - 1] + indicator
+                    );
+                }
+            }
+
+            const distance = matrix[clean2.length][clean1.length];
+            const maxLen = Math.max(clean1.length, clean2.length);
+            const similarity = 1 - (distance / maxLen);
+
+            // Additional word-matching fallback for children
+            const words1 = clean1.split(/\s+/);
+            const words2 = clean2.split(/\s+/);
+            let matchedWords = 0;
+            words2.forEach(w => {
+                if (words1.includes(w)) matchedWords++;
+            });
+            const wordOverlapRatio = matchedWords / Math.max(words1.length, words2.length);
+
+            return Math.max(similarity, wordOverlapRatio);
+        }
+
+        /* ==========================================================================
+           5. GAME LOGIC & FLOW
+           ========================================================================== */
+        
+        // Request Microphone Access explicitly
+        async function requestMicrophone() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                // Stop tracks immediately as speech recognition will open its own
+                stream.getTracks().forEach(track => track.stop());
+                return true;
+            } catch (err) {
+                console.error("Microphone Access Denied:", err);
+                updateStatus("Sila benarkan akses mikrofon untuk bermain permainan ini.", "bg-red-50 text-red-700 border-red-300");
+                return false;
+            }
+        }
+
+        // Start Game Form Handler
+        playerForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            playerName = playerNameInput.value.trim();
+            playerClass = playerClassInput.value.trim();
+
+            if (!playerName || !playerClass) return;
+
+            if (!SpeechRecognition) {
+                alert("Pelayar ini tidak menyokong pengecaman suara. Sila gunakan Google Chrome.");
+                return;
+            }
+
+            const hasMicPermission = await requestMicrophone();
+            if (!hasMicPermission) return;
+
+            // Setup Header Info
+            headerName.textContent = playerName;
+            headerClass.textContent = playerClass;
+            userInfoHeader.classList.remove("hidden");
+
+            // Switch Screen
+            startScreen.classList.add("hidden");
+            gameScreen.classList.remove("hidden");
+
+            currentLevel = 0;
+            score = 0;
+            scoreDisplay.textContent = score;
+
+            loadLevel(currentLevel);
+        });
+
+        // Load Current Level Data
+        function loadLevel(levelIndex) {
+            levelIndicator.textContent = `Level ${levelIndex + 1} / ${SENTENCES.length}`;
+            targetSentenceEl.textContent = `"${SENTENCES[levelIndex].text}"`;
+            sentenceIconEl.textContent = SENTENCES[levelIndex].icon;
+
+            nextLevelBtn.classList.add("hidden");
+            micBtn.classList.remove("hidden");
+            updateStatus("Tekan butang mikrofon dan sebut ayat di atas.", "bg-slate-50 text-slate-600 border-slate-200");
+
+            // Reset Car Position
+            carContainer.className = "absolute bottom-3 left-0 transition-all duration-300 z-10";
+            obstacle.className = "absolute bottom-3 left-[55%] z-10 transition-all duration-300 opacity-100";
+            crashEffect.classList.add("hidden");
+
+            // Trigger approach animation
+            setTimeout(() => {
+                carContainer.classList.add("car-approaching");
+            }, 100);
+        }
+
+        // Handle Microphone Button Click (Push To Talk)
+        micBtn.addEventListener("click", () => {
+            if (!recognition) return;
+            initAudio();
+            if (isListening) {
+                recognition.stop();
+            } else {
+                try {
+                    recognition.start();
+                } catch (e) {
+                    console.log("Recognition start error (already active):", e);
+                }
+            }
+        });
+
+        // Evaluate Speech Output
+        function evaluateSpeech(spokenText) {
+            const targetText = SENTENCES[currentLevel].text;
+            const similarity = calculateSimilarity(spokenText, targetText);
+            console.log(`Similarity Score: ${(similarity * 100).toFixed(1)}%`);
+
+            // Threshold set between 70% to 90% (e.g., 0.70)
+            if (similarity >= 0.70) {
+                handleSuccess(spokenText);
+            } else {
+                handleFailure(spokenText);
+            }
+        }
+
+        // Handle Correct Pronunciation
+        function handleSuccess(spokenText) {
+            playSuccessSound();
+            score += 10;
+            scoreDisplay.textContent = score;
+
+            updateStatus(`✅ Syabas! Sebutan betul: "${spokenText}"`, "bg-emerald-50 text-emerald-700 border-emerald-300");
+
+            // Animate Car Passing the Obstacle
+            carContainer.className = "absolute bottom-3 z-10 car-passing";
+            obstacle.classList.add("opacity-0", "scale-75");
+
+            micBtn.classList.add("hidden");
+            nextLevelBtn.classList.remove("hidden");
+        }
+
+        // Handle Incorrect Pronunciation
+        function handleFailure(spokenText) {
+            playCrashSound();
+
+            updateStatus(`❌ Sebutan kurang tepat: "${spokenText}". Sila cuba lagi!`, "bg-rose-50 text-rose-700 border-rose-300");
+
+            // Animate Crash
+            carContainer.classList.add("car-crashing");
+            crashEffect.classList.remove("hidden");
+
+            setTimeout(() => {
+                carContainer.classList.remove("car-crashing");
+                crashEffect.classList.add("hidden");
+            }, 800);
+        }
+
+        // Next Level Button Event Listener
+        nextLevelBtn.addEventListener("click", () => {
+            currentLevel++;
+            if (currentLevel < SENTENCES.length) {
+                loadLevel(currentLevel);
+            } else {
+                showEndScreen();
+            }
+        });
+
+        /* ==========================================================================
+           6. LEADERBOARD & GAME OVER
+           ========================================================================== */
+        function showEndScreen() {
+            gameScreen.classList.add("hidden");
+            endScreen.classList.remove("hidden");
+
+            finalPlayerName.textContent = playerName;
+            finalPlayerClass.textContent = playerClass;
+            finalScore.textContent = score;
+
+            // Save entry to LocalStorage
+            saveLeaderboard(playerName, playerClass, score);
+
+            // Render Leaderboard
+            renderLeaderboard();
+        }
+
+        function saveLeaderboard(name, cls, finalScore) {
+            let leaderboard = JSON.parse(localStorage.getItem("pronunciation_game_lb") || "[]");
+            leaderboard.push({
+                name: name,
+                class: cls,
+                score: finalScore,
+                date: new Date().toLocaleDateString("ms-MY")
+            });
+            // Sort highest score first
+            leaderboard.sort((a, b) => b.score - a.score);
+            // Keep top 10
+            leaderboard = leaderboard.slice(0, 10);
+            localStorage.setItem("pronunciation_game_lb", JSON.stringify(leaderboard));
+        }
+
+        function renderLeaderboard() {
+            const leaderboard = JSON.parse(localStorage.getItem("pronunciation_game_lb") || "[]");
+            leaderboardBody.innerHTML = "";
+
+            if (leaderboard.length === 0) {
+                leaderboardBody.innerHTML = `<tr><td colspan="4" class="text-center py-2 text-slate-400">Tiada rekod lagi.</td></tr>`;
+                return;
+            }
+
+            leaderboard.forEach((entry, index) => {
+                const tr = document.createElement("tr");
+                tr.className = index === 0 ? "font-bold bg-amber-50" : "";
+                tr.innerHTML = `
+                    <td class="py-2">${index === 0 ? '👑 1' : index + 1}</td>
+                    <td class="py-2">${escapeHtml(entry.name)}</td>
+                    <td class="py-2">${escapeHtml(entry.class)}</td>
+                    <td class="py-2 text-right font-black text-emerald-600">${entry.score}</td>
+                `;
+                leaderboardBody.appendChild(tr);
+            });
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        // Restart Game
+        restartBtn.addEventListener("click", () => {
+            endScreen.classList.add("hidden");
+            startScreen.classList.remove("hidden");
+            playerNameInput.value = "";
+            playerClassInput.value = "";
+        });
+
+        // Helper function for updating status message box
+        function updateStatus(message, borderClass = "bg-slate-50 text-slate-600 border-slate-200") {
+            statusBox.className = `min-h-[48px] flex items-center justify-center px-4 py-2 rounded-xl text-sm md:text-base font-semibold border ${borderClass} transition-all duration-200`;
+            statusBox.textContent = message;
+        }
+
+    </script>
+</body>
+</html>
